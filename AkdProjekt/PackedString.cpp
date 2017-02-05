@@ -1,11 +1,25 @@
 #include "PackedString.h"
 PackedString& PackedString::operator = (const std::string& s)
 {
-	if (this->decodedText != s)
+	if (this->value != s)
 	{
-		for (int i = 0; i < s.length(); i++)
+		if (s.length() < limitValue)
 		{
-			this->decodedText[i] = s[i];
+			value = new char[s.length()];
+			for (int i = 0; i < s.length(); i++)
+			{
+				this->value[i] = s[i];
+			}
+		}
+		else
+		{
+			buffer = new char[s.length()];
+			for (int i = 0; i < s.length(); i++)
+			{
+				this->buffer[i] = s[i];
+			}
+			beforeEncode(s.length());
+			lzssEncode();
 		}
 	}
 	return *this;
@@ -16,7 +30,7 @@ PackedString& PackedString::operator = (const PackedString& s)
 	{
 		this->value = s.value;
 	}
-		
+
 	return *this;
 }
 PackedString& PackedString::operator = (const char* s)
@@ -26,7 +40,7 @@ PackedString& PackedString::operator = (const char* s)
 		int len = strlen(s);
 		if (strlen(s) < limitValue)
 		{
-			value = new char[strlen(s) ];
+			value = new char[strlen(s)];
 			for (int i = 0; i < strlen(s); i++)
 			{
 				this->value[i] = s[i];
@@ -34,7 +48,7 @@ PackedString& PackedString::operator = (const char* s)
 		}
 		else
 		{
-			buffer = new char[strlen(s) ];
+			buffer = new char[strlen(s)];
 			for (int i = 0; i < strlen(s); i++)
 			{
 				this->buffer[i] = s[i];
@@ -48,6 +62,116 @@ PackedString& PackedString::operator = (const char* s)
 PackedString& PackedString::operator = (char ch)
 {
 	this->value[0] = ch;
+	return *this;
+}
+PackedString& PackedString::operator += (const std::string& s)
+{
+	if (isEncoded)
+		lzssDecode();
+	int newLength = strlen(value) + s.length();
+	buffer = new char[newLength];
+	for (int i = 0; i < strlen(value); i++)
+	{
+		this->buffer[i] = value[i];
+	}
+	delete[]value;
+	value = new char[newLength];
+	for (int i = 0; i < s.length(); i++)
+	{
+		this->buffer[i + strlen(value)] = s[i];
+	}
+	for (int i = 0; i < strlen(value); i++)
+	{
+		this->value[i] = buffer[i];
+	}
+	delete[]buffer;
+	if (strlen(this->value)>limitValue)
+	{
+		beforeEncode(strlen(this->value));
+		lzssEncode();
+	}
+	return *this;
+}
+PackedString& PackedString::operator += (const PackedString& s)
+{
+	if (isEncoded)
+		lzssDecode();
+	int newLength = strlen(value) + strlen(s.value);
+	buffer = new char[newLength];
+	for (int i = 0; i < strlen(value); i++)
+	{
+		this->buffer[i] = value[i];
+	}
+	delete[]value;
+	value = new char[newLength];
+	for (int i = 0; i < strlen(s.value); i++)
+	{
+		this->buffer[i + strlen(value)] = s.value[i];
+	}
+	for (int i = 0; i < strlen(value); i++)
+	{
+		this->value[i] = buffer[i];
+	}
+	delete[]buffer;
+	if (strlen(this->value)>limitValue)
+	{
+		beforeEncode(strlen(this->value));
+		lzssEncode();
+	}
+	return *this;
+}
+PackedString& PackedString::operator += (const char* s)
+{
+	if (isEncoded)
+		lzssDecode();
+	int newLength = strlen(value) + strlen(s);
+	buffer = new char[newLength];
+	for (int i = 0; i < strlen(value); i++)
+	{
+		this->buffer[i] = value[i];
+	}
+	delete[]value;
+	value = new char[newLength];
+	for (int i = 0; i < strlen(s); i++)
+	{
+		this->buffer[i + strlen(value)] = s[i];
+	}
+	for (int i = 0; i < strlen(value); i++)
+	{
+		this->value[i] = buffer[i];
+	}
+	delete[]buffer;
+	if (strlen(this->value)>limitValue)
+	{
+		beforeEncode(strlen(this->value));
+		lzssEncode();
+	}
+	return *this;
+}
+PackedString& PackedString::operator += (char ch)
+{
+	if (isEncoded)
+		lzssDecode();
+	int newLength = strlen(value) +1;
+	buffer = new char[newLength];
+	for (int i = 0; i < strlen(value); i++)
+	{
+		this->buffer[i] = value[i];
+	}
+	delete[]value;
+	value = new char[newLength];
+	this->buffer[strlen(value)] = ch;
+
+	for (int i = 0; i < strlen(value); i++)
+	{
+		this->value[i] = buffer[i];
+	}
+	delete[]buffer;
+	if (strlen(this->value)>limitValue)
+	{
+		beforeEncode(strlen(this->value));
+		lzssEncode();
+	}
 	return *this;
 }
 char& PackedString::operator[](size_type index)
@@ -65,10 +189,10 @@ PackedString::PackedString() :std::string()
 {
 
 }
-PackedString::PackedString(const std::string& s) 
+PackedString::PackedString(const std::string& s)
 {
 	limitValue = 5;
-	
+
 	if (s.length() < limitValue)
 	{
 		value = new char[s.length()];
@@ -91,13 +215,13 @@ PackedString::PackedString(const std::string& s)
 PackedString::PackedString(const PackedString& s)
 {
 	limitValue = 5;
-	value = new char[strlen(s.value) ];
+	value = new char[strlen(s.value)];
 	this->value = s.value;
 }
-PackedString::PackedString(size_type length, const char& ch) 
+PackedString::PackedString(size_type length, const char& ch)
 {
 	limitValue = 5;
-	
+
 	if (length < limitValue)
 	{
 		value = new char[length];
@@ -117,14 +241,14 @@ PackedString::PackedString(size_type length, const char& ch)
 		lzssEncode();
 	}
 }
-PackedString::PackedString(const char* str) 
+PackedString::PackedString(const char* str)
 {
 	limitValue = 5;
 	int len = strlen(str);
 	if (strlen(str) < limitValue)
 	{
 		value = new char[strlen(str)];
-		for (int i = 0; i < strlen(str) ; i++)
+		for (int i = 0; i < strlen(str); i++)
 		{
 			this->value[i] = str[i];
 		}
@@ -132,7 +256,7 @@ PackedString::PackedString(const char* str)
 	else
 	{
 		buffer = new char[len];
-		for (int i = 0; i < strlen(str) ; i++)
+		for (int i = 0; i < strlen(str); i++)
 		{
 			this->buffer[i] = str[i];
 		}
@@ -140,7 +264,7 @@ PackedString::PackedString(const char* str)
 		lzssEncode();
 	}
 }
-PackedString::PackedString(const char* str, size_type length) 
+PackedString::PackedString(const char* str, size_type length)
 {
 	limitValue = 5;
 	if (length < limitValue)
@@ -162,7 +286,7 @@ PackedString::PackedString(const char* str, size_type length)
 		lzssEncode();
 	}
 }
-PackedString::PackedString(const std::string& str, size_type index, size_type length) 
+PackedString::PackedString(const std::string& str, size_type index, size_type length)
 {
 	limitValue = 5;
 	if (length < limitValue)
@@ -170,7 +294,7 @@ PackedString::PackedString(const std::string& str, size_type index, size_type le
 		value = new char[length];
 		for (int i = 0; i < length; i++)
 		{
-			this->value[i] = str[index+i];
+			this->value[i] = str[index + i];
 		}
 	}
 	else
@@ -178,7 +302,7 @@ PackedString::PackedString(const std::string& str, size_type index, size_type le
 		buffer = new char[length];
 		for (int i = 0; i < length; i++)
 		{
-			this->buffer[i] = str[index+i];
+			this->buffer[i] = str[index + i];
 		}
 		beforeEncode(length);
 		lzssEncode();
@@ -202,7 +326,7 @@ void PackedString::beforeEncode(int length)
 void PackedString::lzssEncode(void)
 {
 	int hash_val;
-	
+
 	while (buf_pos < buf_size)
 	{
 

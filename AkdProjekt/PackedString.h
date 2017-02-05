@@ -59,5 +59,10 @@ public:
 	PackedString& operator=(const char* s);
 	PackedString& operator=(char ch);
 	char& operator[](size_type index);
+
+	PackedString& operator+=(const std::string& s);
+	PackedString& operator+=(const PackedString& s);
+	PackedString& operator+=(const char* s);
+	PackedString& operator+=(char ch);
 };
 
