@@ -1,0 +1,1 @@
+packedString class comparable with string class from C++ Standard Library, but kept compressed strings, using LZSS encoding.
