@@ -37,8 +37,8 @@ private:
 	void lzssEncode(void);
 	void lzssDecode();
 
-	void writePair(unsigned char letter);
-	void writeTripple(unsigned int offset, unsigned int length);
+	void writePair(unsigned char letter, int index);
+	void writeTripple(unsigned int offset, unsigned int length, int index);
 	void addToText(char *text, int offset, int length, int index);
 	void writeDecodedText(char *text, char *out, int length);
 

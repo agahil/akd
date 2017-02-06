@@ -6,8 +6,11 @@
 int main(int argc, char* argv[])
 {
 	PackedString ps("abracadabradabraca");
+	char c = ps[1];
 	PackedString copy;
+	PackedString newPs("ala");
 	copy = ps;
+	copy += newPs;
 
 	getchar();
 	return 0;
