@@ -193,8 +193,9 @@ PackedString& PackedString::operator += (char ch)
 char& PackedString::operator[](size_type index)
 {
 	if (isEncoded){
-		lzssDecode();
 		buf_size = MAX_LENGTH;
+		lzssDecode();
+		
 		char c = value[index];
 		lzssEncode();
 		return c;
@@ -272,7 +273,7 @@ PackedString::PackedString(const char* str)
 	}
 	else
 	{
-		buffer = new char[len];
+		buffer = new char[MAX_LENGTH];
 		for (int i = 0; i < strlen(str); i++)
 		{
 			this->buffer[i] = str[i];
@@ -294,7 +295,7 @@ PackedString::PackedString(const char* str, size_type length)
 	}
 	else
 	{
-		buffer = new char[length];
+		buffer = new char[MAX_LENGTH];
 		for (int i = 0; i < length; i++)
 		{
 			this->buffer[i] = str[i];
@@ -316,7 +317,7 @@ PackedString::PackedString(const std::string& str, size_type index, size_type le
 	}
 	else
 	{
-		buffer = new char[length];
+		buffer = new char[MAX_LENGTH];
 		for (int i = 0; i < length; i++)
 		{
 			this->buffer[i] = str[index + i];
@@ -378,24 +379,22 @@ void PackedString::lzssEncode(void)
 				{
 					if (*prev + 1 < *iter)
 						length++;
-					else
-						break;
 				}
 				writeTripple(offset, length, index);
-				index += 12;
+				index += 14;
 				buf_pos += length;
 			}
 			else
 			{
 				writePair(buffer[buf_pos], index);
-				index += 5;
+				index += 6;
 				buf_pos++;
 			}
 		}
 		else
 		{
 			writePair(buffer[buf_pos], index);
-			index += 5;
+			index += 6;
 			buf_pos++;
 		}
 
@@ -406,20 +405,20 @@ void PackedString::lzssEncode(void)
 void PackedString::writePair(unsigned char letter, int index)
 {
 
-	sprintf_s(value + index, MAX_LENGTH, "%1d %3d\n", 1, (int)letter);
+	sprintf_s(value + index, MAX_LENGTH, "%1d %3d ", 1, (int)letter);
 }
 
 
 void PackedString::writeTripple(unsigned int offset, unsigned int length, int index)
 {
-	sprintf_s(value + index, MAX_LENGTH, "%1d %3d %3d\n", 0, offset, length);
+	sprintf_s(value + index, MAX_LENGTH, "%1d %7d %3d ", 0, offset, length);
 }
 
 
 // Dekompresja LZSS
 void PackedString::lzssDecode()
 {
-	buffer = new char[buf_size];
+	buffer = new char[MAX_LENGTH];
 	sprintf_s(buffer, buf_size, "%s", value);
 	for (int j = 0; j < strlen(value); j++)
 	{
@@ -427,25 +426,28 @@ void PackedString::lzssDecode()
 	}
 	int index = 0;
 	int i = 0;
+	int buffIndex = 0;
 	char character = ' ';
-	while (sscanf_s(buffer, "%d", &i) && character != '\0')
+	while (sscanf_s(buffer + buffIndex, "%d", &i) && character != '\0')
 	{
+		buffIndex++;
 		if (i == 1)
 		{
 			int num = 0;
-			sscanf_s(buffer, "%d", &num);
+			sscanf_s(buffer+buffIndex, "%d", &num);
 			character = num;
 			value[index] = character;
 			index++;
-
+			buffIndex += 5;
 		}
 		else if (i == 0)
 		{
 			int offset = 0;
 			int length = 0;
-			sscanf_s(buffer, "%d %d", &offset, &length);
+			sscanf_s(buffer + buffIndex, "%d %d", &offset, &length);
 			addToText(value, offset, length, index);
 			index += length;
+			buffIndex += 13;
 		}
 	}
 	delete[]buffer;

@@ -24,8 +24,6 @@ class PackedString :
 {
 private:
 	int limitValue; 
-	char* encodedText;
-	char* decodedText;
 	char*value;
 	char *buffer;
 	int buf_size;//wielkoœæ niezakodowanego tekstu
