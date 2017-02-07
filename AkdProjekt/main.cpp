@@ -9,9 +9,6 @@ int main(int argc, char* argv[])
 	char c = ps[1];
 	PackedString copy;
 	PackedString newPs("ala");
-	copy = ps;
-	copy += newPs;
-
 	ps.substr(5, 10);
 	//copy = ps;
 	//copy += newPs;
