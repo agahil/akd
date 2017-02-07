@@ -6,6 +6,9 @@
 int main(int argc, char* argv[])
 {
 	PackedString ps("abracadabradabraca");
+	int s = ps.size() + 1;
+	char* tab = new char[s];
+	strcpy(tab, ps.c_str());
 	char c = ps[1];
 	PackedString copy;
 	PackedString newPs("ala");

@@ -311,14 +311,22 @@ PackedString::PackedString(const std::string& str, size_type index, size_type le
 	}
 }
 
-
-
 PackedString::~PackedString()
 {
 	delete[]value;
 }
-
-
+const char* PackedString::c_str()
+{
+	if (isEncoded)
+	{
+		buf_size = MAX_LENGTH;
+		lzssDecode();
+	}
+	char* strPtr = new char[MAX_LENGTH];
+	sprintf_s(strPtr, MAX_LENGTH, "%s%s", value,'\0');
+	return strPtr;
+}
+/////////////////////////////LZSS encoding and decoding//////////////////////////////////////////////
 void PackedString::beforeEncode(int length)
 {
 	value = new char[MAX_LENGTH];

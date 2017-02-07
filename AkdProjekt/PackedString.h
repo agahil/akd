@@ -62,5 +62,7 @@ public:
 	PackedString& operator+=(const PackedString& s);
 	PackedString& operator+=(const char* s);
 	PackedString& operator+=(char ch);
+
+	const char* c_str();
 };
 
