@@ -1,0 +1,47 @@
+﻿  PackedString.cpp
+c:\users\flow\documents\github\akd\akdprojekt\packedstring.cpp(6): warning C4018: '<': signed/unsigned mismatch
+c:\users\flow\documents\github\akd\akdprojekt\packedstring.cpp(9): warning C4018: '<': signed/unsigned mismatch
+c:\users\flow\documents\github\akd\akdprojekt\packedstring.cpp(17): warning C4018: '<': signed/unsigned mismatch
+c:\users\flow\documents\github\akd\akdprojekt\packedstring.cpp(41): warning C4018: '<': signed/unsigned mismatch
+c:\users\flow\documents\github\akd\akdprojekt\packedstring.cpp(44): warning C4018: '<': signed/unsigned mismatch
+c:\users\flow\documents\github\akd\akdprojekt\packedstring.cpp(52): warning C4018: '<': signed/unsigned mismatch
+c:\users\flow\documents\github\akd\akdprojekt\packedstring.cpp(78): warning C4018: '<': signed/unsigned mismatch
+c:\users\flow\documents\github\akd\akdprojekt\packedstring.cpp(84): warning C4018: '<': signed/unsigned mismatch
+c:\users\flow\documents\github\akd\akdprojekt\packedstring.cpp(88): warning C4018: '<': signed/unsigned mismatch
+c:\users\flow\documents\github\akd\akdprojekt\packedstring.cpp(94): warning C4018: '>': signed/unsigned mismatch
+c:\users\flow\documents\github\akd\akdprojekt\packedstring.cpp(111): warning C4018: '<': signed/unsigned mismatch
+c:\users\flow\documents\github\akd\akdprojekt\packedstring.cpp(117): warning C4018: '<': signed/unsigned mismatch
+c:\users\flow\documents\github\akd\akdprojekt\packedstring.cpp(121): warning C4018: '<': signed/unsigned mismatch
+c:\users\flow\documents\github\akd\akdprojekt\packedstring.cpp(127): warning C4018: '>': signed/unsigned mismatch
+c:\users\flow\documents\github\akd\akdprojekt\packedstring.cpp(144): warning C4018: '<': signed/unsigned mismatch
+c:\users\flow\documents\github\akd\akdprojekt\packedstring.cpp(150): warning C4018: '<': signed/unsigned mismatch
+c:\users\flow\documents\github\akd\akdprojekt\packedstring.cpp(154): warning C4018: '<': signed/unsigned mismatch
+c:\users\flow\documents\github\akd\akdprojekt\packedstring.cpp(158): warning C4018: '>': signed/unsigned mismatch
+c:\users\flow\documents\github\akd\akdprojekt\packedstring.cpp(174): warning C4018: '<': signed/unsigned mismatch
+c:\users\flow\documents\github\akd\akdprojekt\packedstring.cpp(182): warning C4018: '<': signed/unsigned mismatch
+c:\users\flow\documents\github\akd\akdprojekt\packedstring.cpp(187): warning C4018: '>': signed/unsigned mismatch
+c:\users\flow\documents\github\akd\akdprojekt\packedstring.cpp(222): warning C4018: '<': signed/unsigned mismatch
+c:\users\flow\documents\github\akd\akdprojekt\packedstring.cpp(225): warning C4018: '<': signed/unsigned mismatch
+c:\users\flow\documents\github\akd\akdprojekt\packedstring.cpp(233): warning C4018: '<': signed/unsigned mismatch
+c:\users\flow\documents\github\akd\akdprojekt\packedstring.cpp(251): warning C4018: '<': signed/unsigned mismatch
+c:\users\flow\documents\github\akd\akdprojekt\packedstring.cpp(254): warning C4018: '<': signed/unsigned mismatch
+c:\users\flow\documents\github\akd\akdprojekt\packedstring.cpp(262): warning C4018: '<': signed/unsigned mismatch
+c:\users\flow\documents\github\akd\akdprojekt\packedstring.cpp(274): warning C4018: '<': signed/unsigned mismatch
+c:\users\flow\documents\github\akd\akdprojekt\packedstring.cpp(277): warning C4018: '<': signed/unsigned mismatch
+c:\users\flow\documents\github\akd\akdprojekt\packedstring.cpp(285): warning C4018: '<': signed/unsigned mismatch
+c:\users\flow\documents\github\akd\akdprojekt\packedstring.cpp(296): warning C4018: '<': signed/unsigned mismatch
+c:\users\flow\documents\github\akd\akdprojekt\packedstring.cpp(299): warning C4018: '<': signed/unsigned mismatch
+c:\users\flow\documents\github\akd\akdprojekt\packedstring.cpp(307): warning C4018: '<': signed/unsigned mismatch
+c:\users\flow\documents\github\akd\akdprojekt\packedstring.cpp(318): warning C4018: '<': signed/unsigned mismatch
+c:\users\flow\documents\github\akd\akdprojekt\packedstring.cpp(321): warning C4018: '<': signed/unsigned mismatch
+c:\users\flow\documents\github\akd\akdprojekt\packedstring.cpp(329): warning C4018: '<': signed/unsigned mismatch
+c:\users\flow\documents\github\akd\akdprojekt\packedstring.cpp(433): warning C4018: '<': signed/unsigned mismatch
+c:\users\flow\documents\github\akd\akdprojekt\packedstring.cpp(517): warning C4018: '<': signed/unsigned mismatch
+c:\users\flow\documents\github\akd\akdprojekt\packedstring.cpp(526): warning C4018: '>': signed/unsigned mismatch
+  Generating Code...
+c:\users\flow\documents\github\akd\akdprojekt\packedstring.cpp(209): warning C4172: returning address of local variable or temporary: c
+  Compiling...
+  main.cpp
+  Generating Code...
+  AkdProjekt.vcxproj -> C:\Users\flow\Documents\GitHub\akd\Debug\AkdProjekt.exe
+  AkdProjekt.vcxproj -> C:\Users\flow\Documents\GitHub\akd\Debug\AkdProjekt.pdb (Full PDB)
