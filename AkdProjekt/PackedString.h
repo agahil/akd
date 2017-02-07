@@ -1,7 +1,7 @@
 #pragma once
 #include<stdio.h>
 #include<iostream>
-#include<string.h>
+#include<string>
 #include<map>
 #include<list>
 
@@ -63,6 +63,14 @@ public:
 	PackedString& operator+=(const char* s);
 	PackedString& operator+=(char ch);
 
+
 	const char* c_str();
+
+	bool empty();
+	size_t size();
+	void clear();
+	void substr(int pos, int count);
+	size_t find();
+
 };
 

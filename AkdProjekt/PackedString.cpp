@@ -459,3 +459,67 @@ void PackedString::addToText(char *text, int offset, int length, int index)
 		text[i + index] = text[patternPos];
 	}
 }
+
+bool PackedString::empty()
+{
+	if (strlen(value) == 0 && buf_size == 0)
+		return true;
+
+	return false;
+}
+
+size_t PackedString::size()
+{
+	if (isEncoded)
+		return buf_pos;
+	return strlen(value);
+}
+
+void PackedString::clear()
+{
+	if (isEncoded)
+	{
+		value = "";
+		buf_size = 0;
+		buf_pos = 0;
+		isEncoded = false;
+	}
+	else
+	{
+		delete[] value;
+	}
+}
+
+void PackedString::substr(int pos, int count)
+{
+	int sizeToSub = count;
+	if (isEncoded)
+	{
+		buf_size = MAX_LENGTH;
+		lzssDecode();
+	}
+	if (strlen(value) - pos < sizeToSub)
+	{
+		sizeToSub = strlen(value) - pos;
+	}
+
+	char *buff = new char[sizeToSub];
+	memcpy(buff, value + pos, count);
+
+	value = buff;
+	if (strlen(value) > this->limitValue)
+	{
+		buffer = new unsigned char[MAX_LENGTH];
+		for (int i = 0; i < sizeToSub; i++)
+		{
+			this->buffer[i] = buff[i];
+		}
+		beforeEncode(sizeToSub);
+		lzssEncode();
+	}
+}
+
+size_t PackedString::find()
+{
+	return 0;
+}
