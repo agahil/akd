@@ -5,11 +5,9 @@ PackedString& PackedString::operator = (const std::string& s)
 	{
 		if (s.length() < limitValue)
 		{
-			value = new char[s.length()];
-			for (int i = 0; i < s.length(); i++)
-			{
-				this->value[i] = s[i];
-			}
+			value = new char[MAX_LENGTH];
+			sprintf_s(value, MAX_LENGTH, "%s", s);
+
 		}
 		else
 		{
@@ -40,11 +38,8 @@ PackedString& PackedString::operator = (const char* s)
 		int len = strlen(s);
 		if (strlen(s) < limitValue)
 		{
-			value = new char[strlen(s)];
-			for (int i = 0; i < strlen(s); i++)
-			{
-				this->value[i] = s[i];
-			}
+			value = new char[MAX_LENGTH];
+			sprintf_s(value, MAX_LENGTH, "%s", s);
 		}
 		else
 		{
@@ -74,26 +69,19 @@ PackedString& PackedString::operator += (const std::string& s)
 
 	int length = strlen(value);
 	int newLength = strlen(value) + s.length();
-	buffer = new unsigned char[newLength];
+	buffer = new unsigned char[MAX_LENGTH];
 	for (int i = 0; i < strlen(value); i++)
 	{
 		this->buffer[i] = value[i];
 	}
-	delete[]value;
-	value = new char[newLength];
 	for (int i = 0; i < s.length(); i++)
 	{
 		this->buffer[i + length] = s[i];
 	}
-	for (int i = 0; i < strlen(value); i++)
-	{
-		this->value[i] = buffer[i];
-	}
-	
-	buffer = new unsigned char[MAX_LENGTH];
+
 	if (strlen(this->value)>limitValue)
 	{
-		beforeEncode(strlen(this->value));
+		beforeEncode(newLength);
 		lzssEncode();
 	}
 	return *this;
@@ -105,28 +93,28 @@ PackedString& PackedString::operator += (const PackedString& s)
 		buf_size = MAX_LENGTH;
 		lzssDecode();
 	}
+	PackedString tmp = s;
+	if (s.isEncoded)
+	{
+		tmp.buf_size = MAX_LENGTH;
+		tmp.lzssDecode();
+	}
 	int length = strlen(value);
-	int newLength = strlen(value) + strlen(s.value);
-	buffer = new unsigned char[newLength];
+	int newLength = strlen(value) + strlen(tmp.value);
+	buffer = new unsigned char[MAX_LENGTH];
 	for (int i = 0; i < strlen(value); i++)
 	{
 		this->buffer[i] = value[i];
 	}
-//	delete[]value;
-	value = new char[newLength];
-	for (int i = 0; i < strlen(s.value); i++)
+
+	for (int i = 0; i < strlen(tmp.value); i++)
 	{
-		this->buffer[i + length] = s.value[i];
+		this->buffer[i + length] = tmp.value[i];
 	}
-	for (int i = 0; i < strlen(value); i++)
-	{
-		this->value[i] = buffer[i];
-	}
-	
-	buffer = new unsigned char[MAX_LENGTH];
+
 	if (strlen(this->value)>limitValue)
 	{
-		beforeEncode(strlen(this->value));
+		beforeEncode(newLength);
 		lzssEncode();
 	}
 	return *this;
@@ -140,24 +128,20 @@ PackedString& PackedString::operator += (const char* s)
 	}
 	int length = strlen(value);
 	int newLength = strlen(value) + strlen(s);
-	buffer = new unsigned char[newLength];
+	buffer = new unsigned char[MAX_LENGTH];
 	for (int i = 0; i < strlen(value); i++)
 	{
 		this->buffer[i] = value[i];
 	}
-	delete[]value;
-	value = new char[newLength];
+
 	for (int i = 0; i < strlen(s); i++)
 	{
 		this->buffer[i + length] = s[i];
 	}
-	for (int i = 0; i < strlen(value); i++)
-	{
-		this->value[i] = buffer[i];
-	}
+
 	if (strlen(this->value)>limitValue)
 	{
-		beforeEncode(strlen(this->value));
+		beforeEncode(newLength);
 		lzssEncode();
 	}
 	return *this;
@@ -186,7 +170,7 @@ PackedString& PackedString::operator += (char ch)
 
 	if (strlen(this->value)>limitValue)
 	{
-		beforeEncode(strlen(this->value));
+		beforeEncode(newLength);
 		lzssEncode();
 	}
 	return *this;
@@ -221,11 +205,9 @@ PackedString::PackedString(const std::string& s)
 
 	if (s.length() < limitValue)
 	{
-		value = new char[s.length()];
-		for (int i = 0; i < s.length(); i++)
-		{
-			this->value[i] = s[i];
-		}
+		value = new char[MAX_LENGTH];
+		sprintf_s(value, MAX_LENGTH, "%s", s);
+
 	}
 	else
 	{
@@ -273,11 +255,8 @@ PackedString::PackedString(const char* str)
 	int len = strlen(str);
 	if (strlen(str) < limitValue)
 	{
-		value = new char[strlen(str)];
-		for (int i = 0; i < strlen(str); i++)
-		{
-			this->value[i] = str[i];
-		}
+		value = new char[MAX_LENGTH];
+		sprintf_s(value, MAX_LENGTH, "%s", str);
 	}
 	else
 	{
@@ -295,11 +274,8 @@ PackedString::PackedString(const char* str, size_type length)
 	limitValue = 5;
 	if (length < limitValue)
 	{
-		value = new char[length];
-		for (int i = 0; i < length; i++)
-		{
-			this->value[i] = str[i];
-		}
+		value = new char[MAX_LENGTH];
+		sprintf_s(value, MAX_LENGTH, "%s", str);
 	}
 	else
 	{
@@ -444,7 +420,7 @@ void PackedString::lzssDecode()
 		if (i == 1)
 		{
 			int num = 0;
-			sscanf_s(buff+buffIndex, "%d", &num);
+			sscanf_s(buff + buffIndex, "%d", &num);
 			character = num;
 			value[index] = character;
 			index++;
