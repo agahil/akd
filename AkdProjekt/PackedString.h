@@ -63,6 +63,9 @@ public:
 	PackedString& operator+=(const char* s);
 	PackedString& operator+=(char ch);
 
+
+	const char* c_str();
+
 	bool empty();
 	size_t size();
 	void clear();
