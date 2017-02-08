@@ -315,7 +315,8 @@ PackedString::PackedString(const std::string& str, size_type index, size_type le
 
 PackedString::~PackedString()
 {
-	delete[]value;
+	if(value != NULL)
+		delete[]value;
 }
 
 
@@ -511,7 +512,25 @@ void PackedString::substr(int pos, int count)
 	}
 }
 
-size_t PackedString::find()
+char* PackedString::find(char* s)
 {
-	return 0;
+	if (isEncoded)
+	{
+		buf_size = MAX_LENGTH;
+		lzssDecode();
+	}
+	auto result = std::strstr(value, s);
+
+	if (strlen(value) > this->limitValue)
+	{
+		buffer = new unsigned char[MAX_LENGTH];
+		for (int i = 0; i < strlen(value); i++)
+		{
+			this->buffer[i] = value[i];
+		}
+		beforeEncode(strlen(value));
+		lzssEncode();
+	}
+
+	return result;
 }

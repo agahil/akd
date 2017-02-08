@@ -67,7 +67,7 @@ public:
 	size_t size();
 	void clear();
 	void substr(int pos, int count);
-	size_t find();
+	char* find(char* s);
 
 };
 

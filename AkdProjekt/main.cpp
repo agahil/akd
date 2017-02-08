@@ -14,6 +14,8 @@ int main(int argc, char* argv[])
 	//copy += newPs;
 	if (!ps.empty())
 		printf("Wielkosc: " + ps.size());
+	auto tmp = ps.find("cad");
+
 	ps.clear();
 	if (!newPs.empty())
 		printf("Wielkosc: " + newPs.size());
