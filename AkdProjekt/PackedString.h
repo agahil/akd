@@ -13,20 +13,30 @@
 #define MAX_OFFSET_BITS     15
 #define MAX_OFFSET          (1 << MAX_OFFSET_BITS)
 // Minimalne dopasowanie
-#define MIN_LENGTH          3
-
+#define MIN_LENGTH          6
+#define MIN_LENGTH_TO_COMPRESS 10
 // Zlozenie 3 kolejnych bajtow z sekwencji wejsciowej
 #define GET_HASH(x)     ((buffer[(x)] << 16) | (buffer[(x)+1] << 8) | (buffer[(x)+2]))
-
+#define FIRST_CHAR 0
 
 class PackedString :
 	public std::string
 {
 private:
-	int limitValue; 
+	char character;
+	unsigned char character1;
+	const int limitValue = MIN_LENGTH_TO_COMPRESS;
 	char*value;
-	unsigned char *buffer;
+	unsigned char *buffer; //dane do zakodowania
 	int buf_size;//wielkoœæ niezakodowanego tekstu
+	int encoded_buf_size; //wielkoœæ zakodowanego tekstu
+	int decodedDataLength; //d³ugoœæ niezakodowanego tekstu
+	int encodedDataLength; //d³ugoœæ zakodowanego tekstu
+	int allDataLength; //d³ugoœæ zakodowowanego + niezakodowanego je¿eli taki jest
+	unsigned char *encodedData;
+	unsigned char *decodedData;
+	int encodedDataIndex; //aktualny indeks zakodowanego tekstu
+	int decodedDataIndex; //aktualny indeks niezakodowanego tekstu
 	int buf_pos;
 	bool isEncoded;
 	std::map <int, std::list<int> > map;
@@ -35,10 +45,9 @@ private:
 	void lzssEncode(void);
 	void lzssDecode();
 
-	void writePair(unsigned char letter, int index);
-	void writeTripple(unsigned int offset, unsigned int length, int index);
-	void addToText(char *text, int offset, int length, int index);
-	void writeDecodedText(char *text, char *out, int length);
+	void writePair(unsigned char letter);
+	void writeTripple(unsigned int offset, unsigned int length);
+	void addToText(unsigned char *text, int offset, int length, int index);
 
 public:
 
@@ -48,6 +57,7 @@ public:
 	PackedString(size_type length, const char& ch);
 	PackedString(const char* str);
 	PackedString(const char* str, size_type length);
+	//
 	PackedString(const std::string& str, size_type index, size_type length);
 	//PackedString(std::input_iterator_tag start, std::input_iterator_tag end);
 	~PackedString();
@@ -70,7 +80,7 @@ public:
 	size_t size();
 	void clear();
 	void substr(int pos, int count);
-	char* find(char* s);
+	int find(char* s);
 
 };
 

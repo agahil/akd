@@ -181,7 +181,7 @@ char& PackedString::operator[](size_type index)
 		buf_size = MAX_LENGTH;
 		lzssDecode();
 		int length = strlen(value);
-		char c = value[index];
+		character = value[index];
 		buffer = new unsigned char[MAX_LENGTH];
 		for (int i = 0; i < length; i++)
 		{
@@ -190,24 +190,29 @@ char& PackedString::operator[](size_type index)
 
 		beforeEncode(length);
 		lzssEncode();
-		return c;
+		return character;
 	}
 	return value[index];
 }
 
 PackedString::PackedString() :std::string()
 {
+	encoded_buf_size = 0;
+	decodedDataLength = 0;
+	encodedDataLength = 0;
+	allDataLength = 0;
+	encodedDataIndex = 0;
+	decodedDataIndex = 0;
+	buf_pos = 0;
 
 }
-PackedString::PackedString(const std::string& s)
+PackedString::PackedString(const std::string& s):PackedString::PackedString()
 {
-	limitValue = 5;
-
 	if (s.length() < limitValue)
 	{
+
 		value = new char[MAX_LENGTH];
 		sprintf_s(value, MAX_LENGTH, "%s", s);
-
 	}
 	else
 	{
@@ -220,16 +225,16 @@ PackedString::PackedString(const std::string& s)
 		lzssEncode();
 	}
 }
-PackedString::PackedString(const PackedString& s)
+PackedString::PackedString(const PackedString& s) :PackedString::PackedString()
 {
-	limitValue = 5;
-	value = new char[strlen(s.value)];
+	value = new char[MAX_LENGTH];
+	this->buf_pos = s.buf_pos;
+	this->buf_size = s.buf_size;
 	this->value = s.value;
 }
-PackedString::PackedString(size_type length, const char& ch)
-{
-	limitValue = 5;
 
+PackedString::PackedString(size_type length, const char& ch) :PackedString::PackedString()
+{
 	if (length < limitValue)
 	{
 		value = new char[length];
@@ -247,31 +252,29 @@ PackedString::PackedString(size_type length, const char& ch)
 		}
 		beforeEncode(length);
 		lzssEncode();
+
 	}
 }
-PackedString::PackedString(const char* str)
+PackedString::PackedString(const char* str) :PackedString::PackedString()
 {
-	limitValue = 5;
 	int len = strlen(str);
-	if (strlen(str) < limitValue)
+	decodedData = new unsigned char[len+1];
+	decodedDataLength = len;
+	memcpy(decodedData, str, len);
+	decodedData[len] = '\0';
+
+	if (len > limitValue)
 	{
-		value = new char[MAX_LENGTH];
-		sprintf_s(value, MAX_LENGTH, "%s", str);
-	}
-	else
-	{
-		buffer = new unsigned char[MAX_LENGTH];
-		for (int i = 0; i < strlen(str); i++)
-		{
-			this->buffer[i] = str[i];
-		}
+		buffer = decodedData;
+		//memcpy(buffer, decodedData, len);
 		beforeEncode(len);
 		lzssEncode();
+		//delete[] decodedData; //je¿eli tworzona jest kopia w buffer to odkomentowaæ
+		decodedData = NULL;
 	}
 }
-PackedString::PackedString(const char* str, size_type length)
+PackedString::PackedString(const char* str, size_type length) :PackedString::PackedString()
 {
-	limitValue = 5;
 	if (length < limitValue)
 	{
 		value = new char[MAX_LENGTH];
@@ -288,9 +291,8 @@ PackedString::PackedString(const char* str, size_type length)
 		lzssEncode();
 	}
 }
-PackedString::PackedString(const std::string& str, size_type index, size_type length)
+PackedString::PackedString(const std::string& str, size_type index, size_type length) :PackedString::PackedString()
 {
-	limitValue = 5;
 	if (length < limitValue)
 	{
 		value = new char[length];
@@ -313,7 +315,6 @@ PackedString::PackedString(const std::string& str, size_type index, size_type le
 
 PackedString::~PackedString()
 {
-	if(value != NULL)
 		delete[]value;
 }
 const char* PackedString::c_str()
@@ -325,6 +326,18 @@ const char* PackedString::c_str()
 	}
 	char* strPtr = new char[MAX_LENGTH];
 	sprintf_s(strPtr, MAX_LENGTH, "%s%s", value,'\0');
+
+	if (strlen(value) > this->limitValue)
+	{
+		buffer = new unsigned char[MAX_LENGTH];
+		for (int i = 0; i < strlen(value); i++)
+		{
+			this->buffer[i] = value[i];
+		}
+		beforeEncode(strlen(value));
+		lzssEncode();
+	}
+
 	return strPtr;
 }
 /////////////////////////////LZSS encoding and decoding//////////////////////////////////////////////
@@ -333,137 +346,207 @@ void PackedString::beforeEncode(int length)
 	value = new char[MAX_LENGTH];
 	buf_pos = 0;
 	buf_size = length;
+	decodedDataLength = length;
+	encodedData = new unsigned char[length * 2]; //*2 ze wzglêdu kodowania binarnego: przypadek t
+	encodedDataIndex = 0;
+	for (std::map <int, std::list<int> >::iterator it = map.begin(); it != map.end(); it)
+	{
+		auto tmp = (*it).second;
+		tmp.clear();
+		(*it).second = tmp;
+		it = map.erase(it);
+	}
 }
 void PackedString::lzssEncode(void)
 {
-	int hash_val;
-	int index = 0;
-	while (buf_pos < buf_size)
+	// do oprogramowania
+	int hashx = 0;
+	
+	while (buf_pos < decodedDataLength)
 	{
+		int buf_pos_iter = buf_pos;
+		char actualChar = buffer[buf_pos];
 
-		hash_val = GET_HASH(buf_pos);
-		map[hash_val].push_back(buf_pos);
-
-		buf_pos++;
-	}
-	buf_pos = 0;
-
-	while (buf_pos < buf_size)
-	{
-		int hash_val = GET_HASH(buf_pos);
-		if (map[hash_val].size()>1)
+		//sprawdzenie dopasowania
+		bool isCorrect = false;
+		int maxLength = 1;
+		int maxLengthIndex = 0;
+		if (buf_pos > 3)
 		{
-			std::list<int>::iterator iter = map[hash_val].begin();
-			std::list<int>::iterator prev = map[hash_val].begin();
-			int i = *iter;
-			int length = 3;
-
-			if (*iter != buf_pos)
+			hashx = GET_HASH(buf_pos);
+			auto iterr = map.find(hashx);
+			if (iterr != map.end())
 			{
-				iter++;
-				while (*iter != buf_pos)
+				std::list<int> tmpList = map.find(hashx)->second;
+				int tmp = tmpList.size();
+				int maxAndLastIndex = buf_pos;
+				if (tmp > 0)
 				{
-					iter++;
-					prev++;
+					maxLength = 3;
+					maxLengthIndex = *(tmpList.begin());
 				}
+				for (std::list<int>::iterator it = tmpList.begin(); it != tmpList.end(); it++)
+				{
+					int tmpPosition = buf_pos + 3;
+					int indexPrevPosition = *it;
+					int tmpIndexPrev = indexPrevPosition + 3;
+					int tmpPrevMaxLength = 3;
 
-				int offset = *iter - *prev;
-				while (buffer[*prev + length] == buffer[*iter + length])
-				{
-					if (*prev + 1 < *iter)
-						length++;
+					if (buf_pos - indexPrevPosition >= MAX_OFFSET)
+					{
+						break;
+					}
+					while (buffer[tmpIndexPrev] == buffer[tmpPosition] && tmpIndexPrev < buf_pos)
+					{
+						tmpIndexPrev++;
+						tmpPosition++;
+						tmpPrevMaxLength++;
+					}
+
+					if (tmpPrevMaxLength > maxLength)
+					{
+						maxLength = tmpPrevMaxLength;
+						maxLengthIndex = indexPrevPosition;
+					}
+					if (maxLength > MAX_LENGTH)
+					{
+						break;
+					}
+					if (maxLength >= MIN_LENGTH)
+					{
+						isCorrect = true;
+					}
 				}
-				writeTripple(offset, length, index);
-				index += 14;
-				buf_pos += length;
 			}
-			else
-			{
-				writePair(buffer[buf_pos], index);
-				index += 6;
-				buf_pos++;
-			}
+		}
+
+		//zapis wyjscia
+		if (isCorrect)
+		{
+			writeTripple(buf_pos - maxLengthIndex, maxLength);
 		}
 		else
 		{
-			writePair(buffer[buf_pos], index);
-			index += 6;
-			buf_pos++;
+			maxLength = 1;
+			if (buf_pos == 0)
+			{
+				if (buffer[0] == FIRST_CHAR)
+				{
+					writeTripple(1, 1);
+				}
+				else
+				{
+					writePair(buffer[0]);
+				}
+			}
+			else
+			{
+				writePair(buffer[buf_pos]);
+			}
 		}
+		buf_pos += maxLength;
 
+		//dodanie do tab hash
+
+		while (buf_pos_iter < buf_pos)
+		{
+			hashx = GET_HASH(buf_pos_iter);
+			map[hashx].push_front(buf_pos_iter);
+			buf_pos_iter++;
+		}
 	}
 	delete[]buffer;
+	encodedDataLength = decodedDataLength;
+	decodedDataLength = 0;
 	isEncoded = true;
 }
-void PackedString::writePair(unsigned char letter, int index)
+void PackedString::writePair(unsigned char letter)
 {
+	encodedData[encodedDataIndex] = 1;
+	encodedDataIndex++;
+	encodedData[encodedDataIndex] = letter;
+	encodedDataIndex++;
 
-	sprintf_s(value + index, MAX_LENGTH, "%1d %3d ", 1, (int)letter);
+//	sprintf_s(value, MAX_LENGTH, "%1d %3d ", 1, (int)letter);
 }
 
 
-void PackedString::writeTripple(unsigned int offset, unsigned int length, int index)
+void PackedString::writeTripple(unsigned int offset, unsigned int length)
 {
-	sprintf_s(value + index, MAX_LENGTH, "%1d %7d %3d ", 0, offset, length);
+	unsigned short int off = (unsigned short int) offset;
+	unsigned short int len = (unsigned short int) length;
+	encodedData[encodedDataIndex] = 0;
+	encodedDataIndex++;
+
+	encodedData[encodedDataIndex] = (off >> 8) & 0xFF;
+	encodedDataIndex++;
+	encodedData[encodedDataIndex] = (off) & 0xFF;
+	encodedDataIndex++;
+
+	encodedData[encodedDataIndex] = (len >> 8) & 0xFF;
+	encodedDataIndex++;
+	encodedData[encodedDataIndex] = (len) & 0xFF;
+	encodedDataIndex++;
+//	sprintf_s(value, MAX_LENGTH, "%1d %7d %3d ", 0, offset, length);
 }
 
 
 // Dekompresja LZSS
 void PackedString::lzssDecode()
 {
-	char *buff;
-	buff = new char[MAX_LENGTH];
-	sprintf_s(buff, buf_size, "%s", value);
-
-	for (int j = 0; j < strlen(value); j++)
-	{
-		value[j] = 0;
-	}
+	if (encodedDataLength == 0)
+		return;
+	if (decodedData != NULL)
+		delete[] decodedData;
+	decodedData = new unsigned char[encodedDataLength + 1];
 	int index = 0;
-	int i = 0;
-	int buffIndex = 0;
-	char character = ' ';
-	while (sscanf_s(buff + buffIndex, "%d", &i) && character != '\0')
+	unsigned char flag = 0;
+	unsigned char decodedChar = 0;
+	while (index < encodedDataIndex)
 	{
-		buffIndex++;
-		if (i == 1)
+		flag = encodedData[index++];
+		if (flag == 1)
 		{
 			int num = 0;
-			sscanf_s(buff + buffIndex, "%d", &num);
-			character = num;
-			value[index] = character;
-			index++;
-			buffIndex += 5;
+			decodedChar = encodedData[index++];
+			decodedData[decodedDataIndex] = decodedChar;
+			decodedDataIndex++;
 		}
-		else if (i == 0)
+		else if (flag == 0)
 		{
 			int offset = 0;
 			int length = 0;
-			sscanf_s(buff + buffIndex, "%d %d", &offset, &length);
-			addToText(value, offset, length, index);
-			index += length;
-			buffIndex += 13;
+			offset = (encodedData[index++] << 8) & 0xFF;
+			offset = (encodedData[index++]) & 0xFF;
+			length = (encodedData[index++] << 8) & 0xFF;
+			length = (encodedData[index++]) & 0xFF;
+			addToText(decodedData, offset, length, decodedDataIndex);
+			decodedDataIndex += length;
 		}
 	}
-	delete[]buff;
+	decodedDataLength = decodedDataIndex;
+	decodedData[decodedDataIndex++] = '\0';
+	encodedDataLength = 0;
+	delete[] encodedData;
+	encodedData = NULL;
 	isEncoded = false;
 }
 
 
 
-void PackedString::addToText(char *text, int offset, int length, int index)
+void PackedString::addToText(unsigned char *text, int offset, int length, int index)
 {
 
 	int patternPos = index - offset;
 	for (int i = 0; i < length; i++, patternPos++)
 	{
-		text[i + index] = text[patternPos];
+		text[index + i] = text[patternPos];
 	}
 }
 
 bool PackedString::empty()
 {
-	if (strlen(value) == 0 && buf_size == 0)
+	if (decodedDataLength == 0 && encodedDataLength == 0)
 		return true;
 
 	return false;
@@ -487,7 +570,8 @@ void PackedString::clear()
 	}
 	else
 	{
-		delete[] value;
+		if(value != NULL)
+			value ="";
 	}
 }
 
@@ -507,8 +591,8 @@ void PackedString::substr(int pos, int count)
 	char *buff = new char[sizeToSub];
 	memcpy(buff, value + pos, count);
 
-	value = buff;
-	if (strlen(value) > this->limitValue)
+	//value = buff;
+	if (sizeToSub > this->limitValue)
 	{
 		buffer = new unsigned char[MAX_LENGTH];
 		for (int i = 0; i < sizeToSub; i++)
@@ -516,29 +600,56 @@ void PackedString::substr(int pos, int count)
 			this->buffer[i] = buff[i];
 		}
 		beforeEncode(sizeToSub);
+		/*for (std::map <int, std::list<int> >::iterator it = map.begin(); it != map.end(); it)
+		{
+			auto tmp = (*it).second;
+			tmp.clear();
+			(*it).second = tmp;
+
+			it = map.erase(it);
+		}*/
 		lzssEncode();
 	}
+
+	delete[] buff;
+
 }
 
-char* PackedString::find(char* s)
+int PackedString::find(char* s)
 {
 	if (isEncoded)
 	{
 		buf_size = MAX_LENGTH;
 		lzssDecode();
 	}
-	auto result = std::strstr(value, s);
-
-	if (strlen(value) > this->limitValue)
+	int resultIndex = -1;
+	int iIndex = 0;
+	int jIndex = 0;
+	int slength = strlen(s);
+	for (iIndex = 0; iIndex < decodedDataLength; iIndex++)
 	{
-		buffer = new unsigned char[MAX_LENGTH];
-		for (int i = 0; i < strlen(value); i++)
+		for (jIndex = 0; (jIndex < slength) && (iIndex + slength < decodedDataLength); jIndex++)
 		{
-			this->buffer[i] = value[i];
+			if (decodedData[iIndex + jIndex] != s[jIndex])
+			{
+				break;
+			}
 		}
-		beforeEncode(strlen(value));
+		if (jIndex == slength)
+		{
+			resultIndex = iIndex;
+			break;
+		}
+	}
+	
+
+	if (decodedDataLength > this->limitValue)
+	{
+		buffer = decodedData;
+		beforeEncode(decodedDataLength);
 		lzssEncode();
+		decodedData = NULL;
 	}
 
-	return result;
+	return resultIndex;
 }

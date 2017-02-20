@@ -5,24 +5,36 @@
 
 int main(int argc, char* argv[])
 {
-	PackedString ps("abracadabradabraca");
+	PackedString ps("abracadabradabraca abracadabradabraca abracadabradabraca abracadabradabraca abracadabradabraca abracadabradabraca abracadabradabracau");
+	int findPos;
+	if (!ps.empty())
+		findPos = ps.find("cad");
+
+	//Pobranie d³uoœci przechowywanych danych
 	int s = ps.size() + 1;
 	char* tab = new char[s];
+
+	//Wykorzystanie funkcji c_str() 
 	strcpy(tab, ps.c_str());
+	
+	//Wykorzystanie operatora indeksowania
 	char c = ps[1];
 	PackedString copy;
 	PackedString newPs("ala");
-	ps.substr(5, 10);
-	//copy = ps;
-	//copy += newPs;
+
+	//Wyszukiwanie elementów w ci¹gu
 	if (!ps.empty())
-		printf("Wielkosc: " + ps.size());
-	auto tmp = ps.find("cad");
+		findPos = ps.find("cad");
+
+	ps.substr(5, 10);
+
+	//Operatory
+	copy = ps;
+	copy += newPs;
 
 	ps.clear();
-	if (!newPs.empty())
-		printf("Wielkosc: " + newPs.size());
 	newPs.clear();
-	getchar();
+	
+
 	return 0;
 }
