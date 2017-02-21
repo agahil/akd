@@ -554,25 +554,25 @@ bool PackedString::empty()
 
 size_t PackedString::size()
 {
-	if (isEncoded)
-		return buf_pos;
-	return strlen(value);
+	return encodedDataLength + decodedDataLength;
 }
 
 void PackedString::clear()
 {
-	if (isEncoded)
+	if (encodedData != NULL)
 	{
-		value = "";
-		buf_size = 0;
-		buf_pos = 0;
-		isEncoded = false;
+		delete[] encodedData;
+		encodedData = NULL;
 	}
-	else
+	if (decodedData != NULL)
 	{
-		if(value != NULL)
-			value ="";
+		delete[] decodedData;
+		decodedData = NULL;
 	}
+	encodedDataIndex = 0;
+	encodedDataLength = 0;
+	decodedDataIndex = 0;
+	decodedDataLength = 0;
 }
 
 void PackedString::substr(int pos, int count)
@@ -580,39 +580,36 @@ void PackedString::substr(int pos, int count)
 	int sizeToSub = count;
 	if (isEncoded)
 	{
-		buf_size = MAX_LENGTH;
+	//	buf_size = MAX_LENGTH;
 		lzssDecode();
 	}
-	if (strlen(value) - pos < sizeToSub)
+	if (decodedDataLength < sizeToSub)
 	{
-		sizeToSub = strlen(value) - pos;
+		sizeToSub = decodedDataLength - pos;
 	}
 
-	char *buff = new char[sizeToSub];
-	memcpy(buff, value + pos, count);
+	unsigned char *buff = new unsigned char[sizeToSub+1];
+	memcpy(buff, decodedData + pos, count);
+	buff[sizeToSub] = '\0';
 
-	//value = buff;
 	if (sizeToSub > this->limitValue)
 	{
-		buffer = new unsigned char[MAX_LENGTH];
-		for (int i = 0; i < sizeToSub; i++)
-		{
-			this->buffer[i] = buff[i];
-		}
+		buffer = buff;
 		beforeEncode(sizeToSub);
-		/*for (std::map <int, std::list<int> >::iterator it = map.begin(); it != map.end(); it)
-		{
-			auto tmp = (*it).second;
-			tmp.clear();
-			(*it).second = tmp;
 
-			it = map.erase(it);
-		}*/
 		lzssEncode();
+		delete[] decodedData;
+		decodedData = NULL;
+		decodedDataIndex = 0;
+		decodedDataLength = 0;
 	}
-
-	delete[] buff;
-
+	else
+	{
+		delete[] decodedData;
+		decodedData = buff;
+		decodedDataLength = sizeToSub;
+		decodedDataIndex = sizeToSub + 1;
+	}
 }
 
 int PackedString::find(char* s)
@@ -649,6 +646,8 @@ int PackedString::find(char* s)
 		beforeEncode(decodedDataLength);
 		lzssEncode();
 		decodedData = NULL;
+		decodedDataIndex = 0; //dodane
+		decodedDataLength = 0;//dodane
 	}
 
 	return resultIndex;
