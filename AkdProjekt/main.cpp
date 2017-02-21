@@ -7,6 +7,7 @@ int main(int argc, char* argv[])
 {
 	PackedString ps("abracadabradabraca abracadabradabraca abracadabradabraca abracadabradabraca abracadabradabraca abracadabradabraca abracadabradabracau");
 	int findPos;
+	PackedString pp(ps);
 	if (!ps.empty())
 		findPos = ps.find("cad");
 
@@ -15,10 +16,10 @@ int main(int argc, char* argv[])
 	char* tab = new char[s];
 
 	//Wykorzystanie funkcji c_str() 
-	strcpy(tab, ps.c_str());
+//	strcpy(tab, ps.c_str());
 	
 	//Wykorzystanie operatora indeksowania
-	char c = ps[1];
+	//char c = ps[1];
 	PackedString copy;
 	PackedString newPs("ala");
 
@@ -26,7 +27,7 @@ int main(int argc, char* argv[])
 	if (!ps.empty())
 		findPos = ps.find("cad");
 
-	ps.substr(5, 10);
+	//ps.substr(5, 10);
 
 	//Operatory
 	copy = ps;

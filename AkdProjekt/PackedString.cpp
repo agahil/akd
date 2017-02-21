@@ -180,19 +180,28 @@ char& PackedString::operator[](size_type index)
 	if (isEncoded){
 		buf_size = MAX_LENGTH;
 		lzssDecode();
+		value = new char[MAX_LENGTH];
+		sprintf_s(value, MAX_LENGTH, "%s", decodedData);
 		int length = strlen(value);
-		character = value[index];
+		character = decodedData[index];
 		buffer = new unsigned char[MAX_LENGTH];
 		for (int i = 0; i < length; i++)
 		{
-			buffer[i] = value[i];
+			buffer[i] = decodedData[i];
 		}
 
 		beforeEncode(length);
 		lzssEncode();
+		delete[]value;
 		return character;
 	}
-	return value[index];
+	value = new char[MAX_LENGTH];
+	sprintf_s(value, MAX_LENGTH, "%s", decodedData);
+	char& c = value[index];
+	delete[]value;
+	return c;
+
+
 }
 
 PackedString::PackedString() :std::string()
@@ -208,29 +217,40 @@ PackedString::PackedString() :std::string()
 }
 PackedString::PackedString(const std::string& s):PackedString::PackedString()
 {
-	if (s.length() < limitValue)
-	{
+	int len = s.length();
+	decodedData = new unsigned char[len + 1];
+	decodedDataLength = len;
+	value = new char[MAX_LENGTH];
+	sprintf_s(value, MAX_LENGTH, "%s", s);
+	memcpy(decodedData, value, len);
+	delete[] value;
+	decodedData[len] = '\0';
 
-		value = new char[MAX_LENGTH];
-		sprintf_s(value, MAX_LENGTH, "%s", s);
-	}
-	else
+	if (len > limitValue)
 	{
-		buffer = new unsigned char[MAX_LENGTH];
-		for (int i = 0; i < s.length(); i++)
-		{
-			this->buffer[i] = s[i];
-		}
-		beforeEncode(s.length());
+		buffer = decodedData;
+		beforeEncode(len);
 		lzssEncode();
+		//delete[] decodedData; //je¿eli tworzona jest kopia w buffer to odkomentowaæ
+		decodedData = NULL;
 	}
 }
-PackedString::PackedString(const PackedString& s) :PackedString::PackedString()
+PackedString::PackedString(const PackedString& s) 
 {
+	decodedData = new unsigned char[MAX_LENGTH];
+	decodedData = s.decodedData;
+	encodedData = new unsigned char[MAX_LENGTH];
+	encodedData = s.encodedData;
 	value = new char[MAX_LENGTH];
-	this->buf_pos = s.buf_pos;
-	this->buf_size = s.buf_size;
-	this->value = s.value;
+	buf_pos = s.buf_pos;
+	buf_size = s.buf_size;
+	value = s.value;
+	encoded_buf_size = s.encoded_buf_size;
+	decodedDataLength = s.decodedDataLength;
+	encodedDataLength = s.encodedDataLength;
+	allDataLength = s.allDataLength;
+	encodedDataIndex = s.encodedDataIndex;
+	decodedDataIndex = s.decodedDataIndex;
 }
 
 PackedString::PackedString(size_type length, const char& ch) :PackedString::PackedString()
@@ -275,43 +295,25 @@ PackedString::PackedString(const char* str) :PackedString::PackedString()
 }
 PackedString::PackedString(const char* str, size_type length) :PackedString::PackedString()
 {
-	if (length < limitValue)
+	int len = length;
+	decodedData = new unsigned char[len + 1];
+	decodedDataLength = len;
+	memcpy(decodedData, str, len);
+	decodedData[len] = '\0';
+
+
+	if (len > limitValue)
 	{
-		value = new char[MAX_LENGTH];
-		sprintf_s(value, MAX_LENGTH, "%s", str);
-	}
-	else
-	{
-		buffer = new unsigned char[MAX_LENGTH];
-		for (int i = 0; i < length; i++)
-		{
-			this->buffer[i] = str[i];
-		}
-		beforeEncode(length);
+		buffer = decodedData;
+		beforeEncode(len);
 		lzssEncode();
+		//delete[] decodedData; //je¿eli tworzona jest kopia w buffer to odkomentowaæ
+		decodedData = NULL;
 	}
+
+
 }
-PackedString::PackedString(const std::string& str, size_type index, size_type length) :PackedString::PackedString()
-{
-	if (length < limitValue)
-	{
-		value = new char[length];
-		for (int i = 0; i < length; i++)
-		{
-			this->value[i] = str[index + i];
-		}
-	}
-	else
-	{
-		buffer = new unsigned char[MAX_LENGTH];
-		for (int i = 0; i < length; i++)
-		{
-			this->buffer[i] = str[index + i];
-		}
-		beforeEncode(length);
-		lzssEncode();
-	}
-}
+
 
 PackedString::~PackedString()
 {
@@ -359,7 +361,6 @@ void PackedString::beforeEncode(int length)
 }
 void PackedString::lzssEncode(void)
 {
-	// do oprogramowania
 	int hashx = 0;
 	
 	while (buf_pos < decodedDataLength)
@@ -527,6 +528,7 @@ void PackedString::lzssDecode()
 	decodedDataLength = decodedDataIndex;
 	decodedData[decodedDataIndex++] = '\0';
 	encodedDataLength = 0;
+	if (encodedData != NULL)
 	delete[] encodedData;
 	encodedData = NULL;
 	isEncoded = false;

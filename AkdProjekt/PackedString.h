@@ -57,9 +57,7 @@ public:
 	PackedString(size_type length, const char& ch);
 	PackedString(const char* str);
 	PackedString(const char* str, size_type length);
-	//
-	PackedString(const std::string& str, size_type index, size_type length);
-	//PackedString(std::input_iterator_tag start, std::input_iterator_tag end);
+
 	~PackedString();
 
 	PackedString& operator=(const std::string& s);
